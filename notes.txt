@@ -1,0 +1,94 @@
+
+准备
+1. bash /root/init_env.sh
+2. source /etc/network_turbo
+
+Web访问
+1. cd /root/autodl-tmp/fine-tuning-lab/web_demo/
+2. vim chatglm3_lora.sh    CHECKPOINT_DIR="root/autodl-tmp/fine-tuning-lab/chatglm3/output/hotel_lora-20240512-123940/checkpoint-3000"
+3. bash chatglm3_lora.sh
+	## 其他的也是同理
+	# bash chatglm3_origin.sh
+	# bash chatglm3_pt2.sh
+	# bash llama2_qlora.sh
+
+#服务不稳定	
+1. ssh -L 6006:localhost:6006 -p 17844 root@connect.westb.seetacloud.com
+
+
+训练
+1. tmux
+2. cd chatglm3
+3. sh lora_train.sh
+
+监控
+1. cd /root/autodl-tmp/fine-tuning-lab/chatglm3/output/
+2. tensorboard --logdir=<your dir> --bind_all
+3. tensorboard --logdir=hotel_lora-20240512-123940/ --bind_all
+
+
+
+测试
+1. cd /root/autodl-tmp/fine-tuning-lab/chatglm3
+2. vim lora_eval.sh     CHECKPOINT_DIR=""
+3. bash lora_eval.sh
+
+
+===============================================
+ollama
+
+
+
+lobe-chat
+docker run -d -p 3210:3210 -e OPENAI_API_KEY=sk-xxxx -e OPENAI_PROXY_URL=https://api-proxy.com/v1 -e ACCESS_CODE=lobe66 --name lobe-chat lobehub/lobe-chat
+docker run -d -p 3210:3210 -e OLLAMA_PROXY_URL=http://host.docker.internal:11434/v1 --name lobe-chat lobehub/lobe-chat
+
+open-web-ui
+docker run -d -p 3000:8080 --add-host=host.docker.internal:host-gateway -v open-webui:/app/backend/data --name open-webui --restart always ghcr.io/open-webui/open-webui:main
+
+chatgpt-next-web
+docker run -d -p 3000:3000 -e OPENAI_API_KEY=sk-xxxx -e CODE=123456 --name next-web yidadaa/chatgpt-next-web
+docker run -d -p 3000:3000 -e OPENAI_API_KEY=sk-xxxx -e CODE=123456 --name next-web yidadaa/chatgpt-next-web
+
+
+===============================
+vllm
+
+VLLM_USE_MODELSCOPE=True python -m vllm.entrypoints.openai.api_server  --model="01ai/Yi-6B-Chat" --trust-remote-code --port 6006
+python -m vllm.entrypoints.openai.api_server --model /root/autodl-tmp/Yi-6B-Chat --trust-remote-code --port 6006
+
+curl http://0.0.0.0:6006/v1/chat/completions \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "/root/autodl-tmp/Yi-6B-Chat",
+        "max_tokens":60,
+        "messages": [
+            {
+                "role": "user",
+                "content": "你是谁？"
+            }
+        ]
+    }'
+	
+lobe-chat
+API代理地址：https://u341915-b4c5-153c9120.westc.gpuhub.com:8443/v1
+模型列表：/root/autodl-tmp/Yi-6B-Chat
+
+
+======================================
+
+import os
+ 
+# 设置缓存目录
+os.environ["HF_HUB_CACHE"] = "G:\Warehouse\.cache\huggingface\hub"
+os.environ['HF_DATASETS_CACHE'] = 'G:\Warehouse\.cache\huggingface\datasets'
+os.environ['HF_MODULES_CACHE'] = 'G:\Warehouse\.cache\huggingface\modules'
+# 设置镜像地址
+# os.environ["HUGGINGFACE_HUB_ENDPOINT"] = "https://hf-mirror.com"
+# os.environ['HF_HUB_BASE_URL'] = 'https://hf-mirror.com'
+os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
+
+
+
+
+
